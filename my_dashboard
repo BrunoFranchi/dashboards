@@ -1,0 +1,148 @@
+from dash import Dash, html, dcc, Input, Output, callback
+import plotly.express as px
+import pandas as pd
+
+app = Dash(__name__)
+app = Dash(__name__, external_stylesheets=['assets/style.css'])
+
+# assume you have a "long-form" data frame
+# see https://plotly.com/python/px-arguments/ for more options
+
+tipo_grafico = ['linha','barra']
+tipo_grafico.append('Escolha o tipo de grafico a ser exibido')
+
+#Bloco grafico circulante linha
+df = pd.read_excel("safra/circulante2.xlsx")
+fig = px.line(df, x=df['Trimestre'], y=df.columns[1:], title='Evolução - Circulantes')
+fig_barra_circulante = px.bar(df, x=df['Trimestre'], y=df.columns[1:], title='Evolução - Circulantes')
+opcoes = list(df.columns[1:])
+opcoes.append("Todos os ativos")
+
+
+#Bloco do grafico não circulante linha
+df2 = pd.read_excel("safra/nao_circulante.xlsx")
+fig2 = px.line(df2, x=df2['Trimestre'], y=df2.columns[1:], title='Evolução - Não Circulantes')
+fig_barra_nc = px.bar(df2, x=df2['Trimestre'], y=df2.columns[1:], title='Evolução - Não Circulantes')
+opcoes_grafico_2 = list(df2.columns[1:])
+opcoes_grafico_2.append("Todos os ativos")
+
+
+#Bloco do gráfico de barras - Circulante
+df = pd.read_excel("safra/circulante2.xlsx")
+fig = px.bar(df, x=df['Trimestre'], y=df.columns[1:], title='Evolução - Circulantes')
+opcoes_barra_circulante = list(df.columns[1:])
+opcoes_barra_circulante.append("Todos os ativos")
+
+
+#Bloco do gráfico de barras - Não Circulante
+df2 = pd.read_excel("safra/nao_circulante.xlsx")
+fig2 = px.bar(df2, x=df2['Trimestre'], y=df2.columns[1:], title='Evolução - Não Circulantes')
+opcoes_barra_nao_circulante= list(df2.columns[1:])
+opcoes_barra_nao_circulante.append("Todos os ativos")
+
+
+#fig = px.pie(df, values='ID Loja', names='Valor Final')
+#vendas = list(df['ID Loja'].unique())
+#vendas.append("lojas")
+#total = df['Valor Final'].sum()
+
+
+logo_url = app.get_asset_url('logo.png')
+
+app.layout = html.Div(children=[
+    html.Img(src=logo_url, style={'width': '150px'}),
+    html.H1(children='Evolução por trimestre'),
+     
+    dcc.Dropdown(tipo_grafico, value='Escolha o tipo de grafico a ser exibido', id='tipo', style={'backgroundColor': 'red'}),
+    dcc.Graph(
+        id='',
+        figure=''
+    ),
+    
+    
+    dcc.Dropdown(opcoes, value='Todos os ativos', id='trimestral', style={'backgroundColor': 'gray'}),
+    dcc.Graph(
+        id='evolucao_trimestral',
+        figure=fig
+    ),
+    
+    dcc.Dropdown(opcoes_grafico_2, value='Todos os ativos', id='trimestral_barra', style={'backgroundColor': 'gray'}),
+    dcc.Graph(
+        id='evolucao_trimestral_barra',
+        figure=fig_barra_nc
+    ),
+
+
+
+    #html.Strong(children='Resumo de vendas por Loja'),
+    #html.Div(id='soma_html'),
+    #dcc.Dropdown(vendas, value='lojas', id='lojas_pizza'),
+    # dcc.Graph(
+    #    id='lojas_grafico_pizza',
+    #    figure=fig
+    #),
+    #html.Strong(children=f'Valor total em vendas de todas as unidades R$: {float(total)}'),    
+    
+])
+
+
+
+@app.callback(
+    Output('evolucao_trimestral', 'figure'),
+    Input('trimestral', 'value')
+)
+
+def grafico_linha(value):
+    if value == 'Todos os ativos':
+       fig = px.line(df, x=df['Trimestre'], y=df.columns[1:], title='Evolução - Circulantes')
+    else:
+        coluna_selecionada = df[value]
+        fig = px.line(coluna_selecionada, x=df['Trimestre'], y=coluna_selecionada, title='Evolução - Circulantes')
+    return fig
+
+
+
+@app.callback(
+    Output('evolucao_trimestral_barra', 'figure'),
+    Input('trimestral_barra', 'value')
+    )
+
+def grafico_barra(value):
+    if value == 'Todos os ativos':
+       fig = px.bar(df2, x=df2['Trimestre'], y=df2.columns[1:], title='Evolução - Circulantes')
+    else:
+        coluna_selecionada = df2[value]
+        fig = px.bar(coluna_selecionada, x=df2['Trimestre'], y=coluna_selecionada, title='Evolução - Não Circulantes')
+    return fig
+
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+#def update_output(value):
+#    if value == 'todas as lojas':
+#        fig = px.bar(df, x="Produto", y="Quantidade", color="ID Loja", barmode="group")
+#    else:
+#        tablea_filtrada = df.loc[df['ID Loja'] == value,:]
+#        fig = px.bar(tablea_filtrada, x="Produto", y="Quantidade", color="ID Loja", barmode="group")
+#    return fig
+           
+
+#@app.callback(
+#    Output('lojas_grafico_pizza', 'figure'),
+#    Output('soma_html', 'children'),
+#    Input('lojas_pizza', 'value'),
+#)          
+
+#def grafico_pizza(value):
+#    soma_html = ""
+#    if value == 'lojas':
+#        fig = px.pie(df, values='Valor Final', names='ID Loja')
+#    else:
+#        filtro_loja = df.loc[df['ID Loja'] == value, ['ID Loja','Valor Final']]
+#        fig = px.pie(filtro_loja, values='Valor Final', names='ID Loja')
+#        soma = filtro_loja['Valor Final'].sum()
+#        soma_html = html.Strong(children=f'Valor total dessa unidadeR$: {float(soma)}')
+#    return fig,soma_html
+
